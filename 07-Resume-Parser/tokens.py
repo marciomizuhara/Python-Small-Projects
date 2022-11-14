@@ -1,1 +1,0 @@
-API_KEY = '6PRLdxnIx4isjfVWjskVmwJyQeGRiliX'

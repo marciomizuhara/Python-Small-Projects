@@ -2,7 +2,6 @@ import docx2txt
 import nltk
 import re
 import requests
-import subprocess
 from tokens import *
 from pdfminer.high_level import extract_text
 
