@@ -7,3 +7,5 @@ A collection of various Python small projects I coded throughout my dev life, mo
 * 03 - Finding Unique Words;
 * 04 - URL-Shortner;
 * 05 - Alphabetical Folder Organizer;
+* 06 - Renaming Bulk Files;
+* 07 - Resume Parser.
