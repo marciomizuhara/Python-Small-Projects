@@ -2,7 +2,7 @@ import docx2txt
 import nltk
 import re
 import requests
-from tokens import *
+from tokens import *   # CREATE A 'TOKENS.PY' FILE IN YOUR ROOT FOLDER
 from pdfminer.high_level import extract_text
 
 
@@ -15,11 +15,31 @@ nltk.download('stopwords')
 
 
 # SETTING UP PHONE PARSING REGEX
-PHONE_REG = re.compile(r"[\+\(]?[1-9][0-9 .\-\()]{12,}[0-9]")
+PHONE_REG = re.compile(r'[\+\(]?[1-9][0-9 .\-\()]{12,}[0-9]')
 
 # SETTING UP EMAIL PARSING REGEX
 EMAIL_REG = re.compile(r'[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+')
 
+
+# EDUCATION RESERVED WORDS
+RESERVED_WORDS = [
+    'school',
+    'college',
+    'univers',
+    'academy',
+    'faculty',
+    'institute',
+    'faculdades',
+    'Schola',
+    'schule',
+    'lise',
+    'lyceum',
+    'lycee',
+    'polytechnic',
+    'kolej',
+    'ünivers',
+    'okul',
+]
 
 
 # CONVERTING PDF INTO TXT
@@ -71,7 +91,7 @@ def extract_email_address(txt):
 # EXTRACTING SKILLS
 def skill_exists(skill):
     url = f'https://api.apilayer.com/skills?q={skill}&amp;count=1'
-    headers = {'apikey': API_KEY}  # INSERT YOUR SKILL API KEY HERE (go to https://apilayer.com/marketplace/skills-api)
+    headers = {'apikey': API_KEY}  # GET YOUR SKILL API KEY HERE (go to https://apilayer.com/marketplace/skills-api), THEN STORE IT IN A 'API_KEY' STRING VARIABLE IN THE 'TOKENS.PY' FILE YOU CREATED.
     response = requests.request('GET', url, headers=headers)
     result = response.json()
 
@@ -97,7 +117,6 @@ def extract_skills(input_txt):
 
     for token in filtered_tokens_2[0:50]:  # HERE I SLICED THE SET TO LIMIT THE ITERATIONS AND NOT CRASH THE PROGRAM
         if skill_exists(token.lower()):
-            print('aqui 6')
             found_skills.add(token)
 
     for ngram in bigrams_tigrams[0:50]:   # HERE I SLICED THE SET TO LIMIT THE ITERATIONS AND NOT CRASH THE PROGRAM
@@ -105,6 +124,25 @@ def extract_skills(input_txt):
             found_skills.add(ngram)
 
     return found_skills
+
+
+# EXTRACTING EDUCATION
+def extract_education(input_txt):
+    organizations = []
+
+    # GETTING ALL ORGANIZATIONS NAMES WITH NLTK
+    for sent in nltk.sent_tokenize(input_txt):
+        for chunk in nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(sent))):
+            if hasattr(chunk, 'label') and chunk.label() == 'ORGANIZATION':
+                organizations.append(' '.join(c[0] for c in chunk.leaves()))
+
+    # FILTERING BIGRAMS AND TRIGRAMS FOR RESERVED WORDS
+    education = set()
+    for org in organizations:
+        for word in RESERVED_WORDS:
+            if org.lower().find(word) >= 0:
+                education.add(org)
+    return education
 
 
 if __name__ == '__main__':
@@ -118,10 +156,13 @@ if __name__ == '__main__':
         parsed_text = extract_text_from_docx('resume.docx')
     else:
         pass
-    name = extract_names(parsed_text)
+    names = extract_names(parsed_text)
+    name = [x for x in names if len(x.split(' ')) > 1]
     phone_number = extract_phone_number(parsed_text)
     email_address = extract_email_address(parsed_text)
     skills = extract_skills(parsed_text)
+    education_information = extract_education(parsed_text)
+    education = [x for x in education_information if len(x.split(' ')) > 1]
     if name:
         print('Name: ', name[0])
     if phone_number:
@@ -130,3 +171,5 @@ if __name__ == '__main__':
         print('Email address: ', email_address)
     if skills:
         print('Skills :', skills)
+    if education_information:
+        print('Education :', education_information)
